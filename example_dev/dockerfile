@@ -1,3 +1,6 @@
+# surprisingly, I see a difference when built on my ARM Qualcomm laptop, possibly due to a form of cache?
+# I end up commenting out the line with error and beyond, and enter a console with the result so far, and try the next instruction there
+# interestingly, each RUN command is as is having a new shell 
 FROM ubuntu:noble
 
 # #RUN wget https://apt.kitware.com/kitware-archive.sh
@@ -28,37 +31,44 @@ RUN apt-get install -y libmagic1
 ## Get Zephyr and install Python dependencies
 RUN apt-get install -y python3-venv
 WORKDIR /src
-RUN python3 -m venv /src/zephyrproject/.venv
-# cd ~/zephyrproject
-WORKDIR /src/zephyrproject
-RUN source .venv/bin/activate
-RUN pip install west
-RUN west init /src/zephyrproject
-RUN west update
-RUN west zephyr-export
-RUN pip install -r /src/zephyrproject/zephyr/scripts/requirements.txt
+
+### I believe this part is not useful
+# # cd ~/zephyrproject
+# WORKDIR /src/zephyrproject
+# RUN python3 -m venv ./.venv
+# # for use of venv in dockerfile: https://www.reddit.com/r/Python/comments/72v16x/comment/dnm1m6p/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+# RUN . .venv/bin/activate && pip install west
+# RUN . .venv/bin/activate && west init /src/zephyrproject
+# RUN . .venv/bin/activate && west update
+# RUN . .venv/bin/activate && west zephyr-export
+# RUN . .venv/bin/activate && pip install -r /src/zephyrproject/zephyr/scripts/requirements.txt
 
 ## Install the Zephyr SDK
 # cd ~
 WORKDIR /src
 RUN wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.8/zephyr-sdk-0.16.8_linux-x86_64.tar.xz
-RUN wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.8/sha256.sum | shasum --check --ignore-missing
-RUN tar xvf zephyr-sdk-0.16.8_linux-x86_64.tar.xz
+RUN if (wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.8/sha256.sum | shasum --check --ignore-missing) ; then \
+    tar xvf zephyr-sdk-0.16.8_linux-x86_64.tar.xz ; \
+    fi
 
 # cd zephyr-sdk-0.16.8
 WORKDIR /src/zephyr-sdk-0.16.8
-# TODO AT THE END MANUALLY:
-#RUN ./setup.sh # install only once, asks if install host tools => y, asks if register Zephyr SDK cmake pkg => y, press key to exit
+RUN yes | ./setup.sh
 
+## back to ocre build
+### 2. Create a Virtual Python Environment (venv)
 WORKDIR /src/runtime
-RUN source .venv/bin/activate
-RUN pip install west
-# following fails and requires to input 'yes' to get it going
-#RUN west init -m git@github.com:project-ocre/ocre-runtime.git  
-# fix?
-RUN west init -m https://github.com/project-ocre/ocre-runtime.git  
-RUN west update
+RUN python3 -m venv ./.venv
+### 3. Install WEST
+RUN . .venv/bin/activate && pip install west
+### 4. Initialize the workspace
+RUN . .venv/bin/activate && west init -m https://github.com/project-ocre/ocre-runtime.git  
+### 5. Update West
+RUN . .venv/bin/activate && west update
+### 6. Install Additional Zephyr (pip) requirements
+RUN . .venv/bin/activate && pip install -r zephyr/scripts/requirements.txt
+### 7. Build the application
+RUN . .venv/bin/activate && west build -b native_sim ./application -d build -- -DMODULE_EXT_ROOT=`pwd`/application
 
-
-
-# ENTRYPOINT [ "echo", "" ]
+### 8. Run the application
+# ENTRYPOINT [ "/src/runtime/build/zephyr/zephyr.exe" ]

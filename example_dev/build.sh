@@ -1,3 +1,5 @@
 # sudo apt install qemu-kvm to enable buildx
 # I rebooted to make sure docker services are aware of qemu
-sudo docker  buildx build --platform linux/amd64  . -f dockerfile -t test-ocre
+
+sudo docker  build --rm . -f dockerfile -t local-ocre
+sudo docker run -it --rm --name run-ocre local-ocre bash
