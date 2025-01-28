@@ -8,7 +8,10 @@
 
 Ocre is a container runtime for constrained devices. It leverages [WebAssembly](https://www.webassembly.org) and [Zephyr](https://www.zephyrproject.org/) to support OCI-type application containers in a footprint up to 2,000 times smaller than traditional Linux-based container runtimes. Our mission is to modernize the embedded applications by making it as easy to develop and securely deploy apps on constrained edge devices as it is in the cloud.
 
-## Getting Started 
+## Getting Started (docker based Alternative by SR)
+The original guide below is manual, I have transcribed it to a dockerfile (requires installing docker and qemu in WSL2), find it in folder ```./example_dev/``` , and run the script ```build.sh``` . Once the script finishes, you should be on a console running inside a temporary container where
+
+## Getting Started (Original)
 This guide walks you through building and running Ocre on a simulated device using Zephyr's `native_sim` target. For instructions on building and flashing Ocre to physical hardware, please refer to our [documentation](https://docs.project-ocre.org/quickstart/firmware/hardware/).
 
 The application in `./src/main.c` demonstrates basic Ocre runtime usage by writing a hello world application to flash and executing it.
